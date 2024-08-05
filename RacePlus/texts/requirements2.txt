@@ -1,0 +1,14 @@
+Flask
+flask-sqlalchemy
+flask-wtf
+Flask-Mail
+flask-login
+
+pip install flask-bcrypt
+pip install itsdangerous
+
+
+για σύνδεση με google api 
+αναζήτηση enable less secure apps gmail
+
+pip install python-greek-names

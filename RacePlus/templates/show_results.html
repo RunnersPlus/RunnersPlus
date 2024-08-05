@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+{%include "navbar.html" %}
+
+<div class="container mt-3">
+    <div class="container">
+        <h5 class="mt-4">{{racename}} - Αποτελέσματα χρονομέτρησης {{event_year}}</h5>
+        <p class="text-muted small font-italic">Επιλέξτε την επικεφαλίδα κάθε στήλης για να ταξινομήσετε τις εγγραφές</p>
+        
+        <div class="table-responsive">
+            <form method="POST">
+                
+                <div class="d-flex justify-content-start mb-3">
+                    <button type="button" class="btn btn-primary me-3" onclick="printList('{{ racename }}')">Εξαγωγή σε PDF</button>
+                    <button type="button" class="btn btn-primary" onclick="exportTableToExcel()">Εξαγωγή σε XLS</button>
+                    <form action="{{ url_for('crud_event', event_id=1) }}" method="post" style="display: inline;">
+                        <input type="hidden" name="select_button" >
+                        <button type="submit" class="btn btn-success mx-2">Επιστροφή στο γεγονός</button>
+                    </form>
+                </div>
+            </form>
+            <label for="age_category">Ηλικιακή κατηγορία:</label>
+            <select name="age_category" id="age_category" class="small" onchange="filterEntries()">
+                {%if age_category!='Χωρίς κατηγορίες'%}
+                    <option value="">Χωρίς επιλογή</option>
+                {%endif%}
+                <script>
+                    var ageCategories = "{{ age_category }}";
+                    var categoriesArray = ageCategories.split(", ");
+                    for (var i = 0; i < categoriesArray.length; i++) {
+                        document.write('<option value="' + categoriesArray[i] + '">' + categoriesArray[i] + '</option>');
+                    }
+                </script>
+            </select>
+
+
+            <table class="table mt-2 table-responsive" id="tableToPrint">
+                <thead class="small">
+                    <tr>
+                        <th class="small sortable" onclick="sortTable(0)">Α/Α</th>
+                        <th class="small sortable" onclick="sortTable(1)">Ονοματεπώνυμο</th>
+                        <th class="small sortable" onclick="sortTable(2)">Φύλο</th>
+                        <th class="small sortable" onclick="sortTable(3)">Έτος γέννησης</th>
+                        <th class="small sortable" onclick="sortTable(4)">Σύλλογος</th>
+                        <th class="small sortable" onclick="sortTable(5)">Πόλη</th>
+                        <th class="small sortable" onclick="sortTable(6)">Start time</th>
+                        <th class="small sortable" onclick="sortTable(7)">End time</th>
+                        <th class="small sortable" onclick="sortTable(8)">Net time</th>
+
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    {% for entry in all_results %}
+                        <tr class="bg-light text-dark small">
+                            <td class="text-muted small">{{ loop.index }}</td>
+                            <td class="text-muted small">{{ entry[0] }}</td>
+                            <td class="text-muted small">{{ entry[1] }}</td>
+                            <td class="text-muted small">{{ entry[2] }}</td>
+                            <td class="text-muted small">{{ entry[3] }}</td>
+                            <td class="text-muted small">{{ entry[4] }}</td>
+                            <td class="text-muted small">{{ entry[5] }}</td>
+                            <td class="text-muted small">{{ entry[6] }}</td>
+                            <td class="text-muted small">{{ entry[7] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+function filterEntries() {
+    var ageCategory = document.getElementById('age_category').value;
+    var tableRows = document.querySelectorAll('#tableToPrint tbody tr');
+
+    tableRows.forEach(function(row) {
+        var birthYear = parseInt(row.cells[3].textContent); // στήλη του έτους γέννησης
+        var currentYear = {{event_year}}; //  το έτος που έγινε το event
+        var age = currentYear - birthYear;
+
+        if (ageCategory === '') {
+            row.style.display = ''; // Εμφάνισε όλες τις εγγραφές αν δεν έχει επιλεγεί ηλικιακή κατηγορία
+        } else if (ageCategory === 'Κάτω των 18' && age < 18) {
+            row.style.display = ''; 
+        } else if (ageCategory === 'από 18 μέχρι 30' && age >= 18 && age < 30) {
+            row.style.display = ''; 
+        } else if (ageCategory === 'από 30 μέχρι 40' && age >= 30 && age < 40) {
+            row.style.display = ''; 
+        } else if (ageCategory === 'από 40 μέχρι 50' && age >= 40 && age < 50) {
+            row.style.display = ''; 
+        } else if (ageCategory === 'πάνω από 50' && age >= 50) {
+            row.style.display = ''; 
+        } else {
+            row.style.display = 'none'; // Απόκρυψε τις υπόλοιπες εγγραφές
+        }
+    });
+}
+
+
+
+function printList() {
+    var prtContent = document.getElementById("tableToPrint");
+    var rows = prtContent.getElementsByTagName("tr");
+    var WinPrint = window.open('', '', 'left=0,top=0,toolbar=0,scrollbars=0,status=0');
+    WinPrint.document.write('<html><head><title>{{racename}}</title>');
+    WinPrint.document.write('<style>');
+    WinPrint.document.write('table {width: 100%; border-collapse: collapse;}');
+    WinPrint.document.write('th, td {border: 1px solid black; padding: 8px; text-align: left;}');
+    WinPrint.document.write('th {background-color: #f2f2f2;}');
+    WinPrint.document.write('h4 {text-align: center;}');
+    WinPrint.document.write('</style>');
+    WinPrint.document.write('</head><body>');
+    WinPrint.document.write('<h4>Συμμετέχοντες στο {{racename}}</h4>');
+    WinPrint.document.write('<table>');
+    WinPrint.document.write('<thead>');
+    WinPrint.document.write('<tr>');
+    WinPrint.document.write('<th>Α/Α</th>');
+    WinPrint.document.write('<th>Ονοματεπώνυμο</th>');
+    WinPrint.document.write('<th>Φύλο</th>');
+    WinPrint.document.write('<th>Έτος γέννησης</th>');
+    WinPrint.document.write('<th>Σύλλογος</th>');
+    WinPrint.document.write('<th>Πόλη</th>');
+    WinPrint.document.write('<th>Start time</th>');
+    WinPrint.document.write('<th>End time</th>');
+    WinPrint.document.write('<th>Net time</th>');
+    WinPrint.document.write('</tr>');
+    WinPrint.document.write('</thead>');
+    WinPrint.document.write('<tbody>');
+
+    for (var i = 1; i < rows.length; i++) {
+        var cols = rows[i].getElementsByTagName("td");
+        WinPrint.document.write('<tr>');
+        for (var j = 0; j < cols.length; j++) {
+            WinPrint.document.write('<td>' + cols[j].innerHTML + '</td>');
+        }
+        WinPrint.document.write('</tr>');
+    }
+
+    WinPrint.document.write('</tbody>');
+    WinPrint.document.write('</table>');
+    WinPrint.document.write('</body></html>');
+    WinPrint.document.close();
+    WinPrint.focus();
+    WinPrint.print();
+    WinPrint.close();
+}
+
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("tableToPrint");
+        switching = true;
+        dir = "asc";
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                if (dir == "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+        var aaCells = table.querySelectorAll("tr td:first-child");
+        for (i = 0; i < aaCells.length; i++) {
+            aaCells[i].innerHTML = i + 1;
+        }
+    }
+
+
+function exportTableToExcel() {
+    var prtContent = document.getElementById("tableToPrint");
+    var rows = prtContent.getElementsByTagName("tr");
+    
+    var xls = '<html xmlns:x="urn:schemas-microsoft-com:office:excel">';
+    xls += '<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>';
+    xls += '<x:Name>Sheet 1</x:Name>';
+    xls += '<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>';
+    xls += '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head><body>';
+    xls += '<table border="1">';
+
+    for (var i = 0; i < rows.length; i++) {
+        xls += '<tr>';
+        var cols = rows[i].querySelectorAll("td, th");
+        for (var j = 0; j < cols.length; j++) {
+            xls += '<td>' + cols[j].innerHTML + '</td>';
+        }
+        xls += '</tr>';
+    }
+
+    xls += '</table></body></html>';
+
+    var blob = new Blob([xls], { type: 'application/vnd.ms-excel' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'tableToPrint.xls';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+
+<style>
+    th.sortable {
+        cursor: pointer;
+    }
+</style>
+
+
+
+
+
+{% endblock %}

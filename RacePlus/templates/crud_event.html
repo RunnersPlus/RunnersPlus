@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% block content %}  
+    
+
+{%include "navbar.html" %}
+{% for message in get_flashed_messages() %}
+   
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    {{ message }}
+ <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+<div class="container mt-4">
+    <h3 class="mb-4 text-center">{{ event.racename }}</h3>
+    <div class="card  border-primary">
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <div class="card-body" style="background-color: #d2e3e8;">
+                <p class="card-text">Ημερομηνία: {{ event.date.strftime('%d/%m/%Y') }}, Ώρα: {{
+                    event.time.strftime('%H:%M') }}</p>
+                <p class="card-text">Απόσταση: {{ event.distance }}</p>
+                <p class="card-text">Δηλώσεις μέχρι: {{ event.finalize_date.strftime('%d/%m/%Y') }}</p>
+                {%if event.declaration or event.link or event.map%}
+                    <p class="card-text">
+                        {%if event.declaration%}
+                            <a href="{{url_for('static',filename = 'declaration_files/' + event.declaration)}}">Προκήρυξη</a>
+                            &nbsp;
+                        {%endif%}
+                        {%if event.link%}
+                            <a href="{{event.link }}" target="_blank">Ιστοσελίδα</a> &nbsp;
+                        {%endif%}
+                        {%if event.map%}
+                            <a href="{{ event.map }}" target="_blank">Χάρτης</a>
+                        {%endif%}
+                    </p>
+
+                {%endif%}
+                <p class="card-text">Ηλικιακές κατηγορίες:
+                    {%for category in event_categories%}
+                        {%if category.id == event.age_categories%}
+                            {{ category.name }}
+                        {%endif%}
+                    {%endfor%}
+                </p>
+                <div class="row">
+                    <p class="card-text">Παροχές βασικού πακέτου 
+                        {%if event.entry_fee>0 %} 
+                            με κόστος  {{event.entry_fee}} €
+                        {%else%}
+                            δωρεάν
+                        {%endif%}
+                    </p>
+                    <div class="col-sm-3">
+                        <div class="form-check">
+
+                            {% if event_provides_dict['bib'] %}
+                                <input type="checkbox" class="form-check-input" checked disabled>
+                            {% else %}
+                                <input type="checkbox" class="form-check-input" disabled>
+                            {% endif %}
+                            <label class="form-check-label">Αριθμός</label>
+
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="form-check">
+                            {% if event_provides_dict['medal'] %}
+                                <input type="checkbox" class="form-check-input" checked disabled>
+                            {% else %}
+                                <input type="checkbox" class="form-check-input" disabled>
+                            {% endif %}
+
+                            <label class="form-check-label">Μετάλιο</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="form-check">
+                            {% if event_provides_dict['certificate'] %}
+                                <input type="checkbox" class="form-check-input" checked disabled>
+                            {% else %}
+                                <input type="checkbox" class="form-check-input" disabled>
+                            {% endif %}
+
+                            <label class="form-check-label">Βεβαίωση συμμετοχής</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="form-check">
+                            {% if event_provides_dict['tshirt'] %}
+                                <input type="checkbox" class="form-check-input" checked disabled>
+                            {% else %}
+                                <input type="checkbox" class="form-check-input" disabled>
+                            {% endif %}
+
+                            <label class="form-check-label">Μπλουζάκι</label>
+                        </div>
+
+                    </div>
+                    <div class="col-sm-3">
+
+                        {% if event_provides_dict.get('other') %}
+                            <p class="card-text">Άλλη παροχή: {{ event_provides_dict['other'] }} </p>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+    </div>
+
+    <div class="form-group mt-3">
+
+        {%if current_user.is_authenticated %}
+            <!-- έλεγχος το γεγονός αφορά τον συνδεδεμένο διαχεριστή -->
+            {%if (current_user.details.role=="admin" and event in current_user.enroll) 
+                or current_user.details.role=="super_admin"%}
+           
+            <button type="submit" name="select_button" value="Τροποποίηση" title="Τροποποίηση των στοιχείων του γεγονότος" class="btn btn-primary btn-block mt-3">
+                {{ "Τροποποίηση" }}
+            </button> 
+            <button type="submit" name="select_button" value="Διαγραφή" title="Διαγραφή μετά από επιβεβαίωση του γεγονότος" class="btn btn-primary btn-block mt-3" onclick="return confirmDelete('{{ event.racename }}')">
+                    {{ "Διαγραφή" }}
+            </button>
+            
+            
+                <button type="submit" name="select_button" value="Εμφάνιση δηλώσεων" title= "Εμφάνιση των αθλητών που έχουν δηλώσει συμμετοχή"class="btn btn-primary btn-block mt-3">
+                    {{ "Δηλώσεις" }}
+                </button>
+                <button type="submit" name="select_button" value="Ανάθεση ID" title="Απόδοση ID tags στους αθλητές" class="btn btn-primary btn-block mt-3">
+                    {{ "Ανάθεση ID" }}
+                </button>
+            {%if tags_ok%}
+                <button type="submit" name="select_button" value="Xρονομέτρηση" title="Ενημέρωση με τα στοιχεία χρονομέτρησης" class="btn btn-primary btn-block mt-3">
+                    {{ "Xρονομέτρηση" }}
+                </button>
+            {%else%}
+                
+                <button type="submit" name="select_button" value="Xρονομέτρηση" title="Ενημέρωση με τα στοιχεία χρονομέτρησης" class="btn btn-primary btn-block mt-3" disabled>
+                    {{ "Xρονομέτρηση" }}
+                </button>
+            {%endif%}
+            {%if tags_ok and crono_ok%}
+                <button type="submit" name="select_button" value="Αποτελέσματα" title="Έκδοση αποτελεσμάτων χρονομέτρησης" class="btn btn-primary btn-block mt-3">
+                    {{ "Αποτελέσματα" }}
+                </button>
+                <button type="submit" name="select_button" value="Οριστικοποίηση" title="Οριστικοποίηση αποτελεσμάτων χρονομέτρησης" class="btn btn-primary btn-block mt-3">
+                    {{ "Οριστικοποίηση" }}
+                </button>
+            {%else%}
+                <button type="submit" name="select_button" value="Οριστικοποίηση" title="Οριστικοποίηση αποτελεσμάτων χρονομέτρησης" class="btn btn-primary btn-block mt-3" disabled>
+                    {{ "Οριστικοποίηση" }}
+                </button>
+            {%endif%}
+            <script>
+                function confirmDelete(racename) {
+                    // Εμφάνιση πλαισίου επιβεβαίωσης με το όνομα του αθλητικού γεγονότος
+                    return confirm("Επιβεβαιώστε ότι θέλετε να διαγράψετε το αθλητικό γεγονός: " + racename);
+                }
+            </script>
+
+            {%else %} 
+                {% if current_user.details.role=='user' %}
+                    {%if tags_ok%}
+                        <p>Συμμετοχή στο γεγονός με το id tag: {{tag_id_current_user}}</p>
+                    {%endif%}
+                    {% if event not in current_user.enroll or deletion_requested %} 
+                        <button type="submit" name="select_button" value="Δήλωση συμμετοχής" class="btn btn-primary btn-block mt-3">{{ "Δήλωση συμμετοχής" }}</button>
+                    {%else%}
+                        <button type="submit" name="select_button" value="Δήλωση συμμετοχής" class="btn btn-primary btn-block mt-3" disabled> {{ "Δήλωση συμμετοχής" }}  </button>
+                        {%if deletion_requested or tags_ok%}
+                        
+                            <button type="submit" name="select_button" value="Ακύρωση συμμετοχής" class="btn btn-primary btn-block mt-3" disabled>{{ "Ακύρωση συμμετοχής" }}</button>
+                        {%else%}
+                            <button type="submit" name="select_button" value="Ακύρωση συμμετοχής" class="btn btn-primary btn-block mt-3" >{{  "Ακύρωση συμμετοχής" }}</button>
+                        {%endif%}
+                        {%if crono_ok and tags_ok%}
+                            <button type="submit" name="select_button" value="Αποτελέσματα" class="btn btn-primary btn-block mt-3" >{{  "Αποτελέσματα" }}</button>
+
+                        {%endif%}
+                    {%endif%}
+                {%endif%}
+            {%endif%}
+        {%else%} <!-- Guest -->
+            <button type="submit" name="select_button" value="Εγγραφή χρήστη" class="btn btn-primary btn-block mt-3">{{ 
+                "Εγγραφή χρήστη" }}
+            </button>
+            {%if tags_ok and crono_ok%}
+                <button type="submit" name="select_button" value="Αποτελέσματα" class="btn btn-primary btn-block mt-3">
+                    {{ "Αποτελέσματα" }}
+                </button>
+            {%else%}
+                <button type="submit" name="select_button" value="Αποτελέσματα" class="btn btn-primary btn-block mt-3" disabled>
+                    {{ "Αποτελέσματα" }}
+                </button>
+            {%endif%}
+        {%endif%}
+    </div>
+    </form>
+
+
+
+</div>
+
+{% endblock %}

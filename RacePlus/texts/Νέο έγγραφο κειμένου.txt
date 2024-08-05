@@ -1,0 +1,20 @@
+https://chatdocsai.com/login
+
+----- Δημιουργία βάσης από το Terminal  ----
+from login_logout.models import User
+from login_logout import db
+db.create_all()
+
+---- Query ------------
+from login_logout.models import User
+User.query.all()
+
+πχ.
+user=User.query.first()
+user # print
+user.password 
+
+
+pip install postgres
+
+κατεβάζω από το site της postgres το pgadmin για windows

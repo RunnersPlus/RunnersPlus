@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}  
+{%include "navbar.html" %}
+
+<div class="contentA">
+
+    <div class="card text-center">
+
+        <div class="card-body" style="background-color: #1b2653; color:white;">
+            <br><br><br>
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-6 content-wrapper">
+                  <h6 class="card-text">
+                    {% if canDeclare %} 
+                        <p>Η δήλωση στο αθλητικό γεγονός <span style ="color: #007BFF;
+                            font-weight: bold;">{{event.racename}} </span> πραγματοποιήθηκε.<br><br>
+                            Οι διοργανωτές θα σας ενημερώσουν στο <span style ="color: #007BFF;
+                            font-weight: bold;">email σας </span>για την ολοκλήρωση 
+                            της διαδικασίας όταν ρυθμιστεί το θέμα της πληρωμής.<br><br>
+                            Μπορείτε να ακυρώσετε τη συμμετοχή σας από την αντίστοιχη επιλογή.
+                        </p> 
+                    {% else %} 
+                        <p> Δεν έχετε καταχωρήσει απαραίτητα στοιχεία του λογαριασμού σας.<br>
+                            Παρακαλούμε όπως ενημερώσετε τον λογαριασμό σας και κατόπιν 
+                            επιλέχτε ξανά το αθλητικό γεγονός στο οποίο θέλετε να συμμετάσχετε.
+                        </p>
+                        <a href="{{ url_for('account') }}" class="btn btn-primary">Λογαριασμός</a>
+                    {% endif %}
+                    <br>
+                  </h6>
+                </div>
+            </div>
+        </div>
+    
+    </div>
+    
+</div>
+
+{% endblock %}

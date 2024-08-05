@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% block content %}
+    
+{%include "navbar.html" %}
+
+<div class="container">
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning alert-dismissible fade show" role="{{category}}">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+   
+    <div class="container">
+    
+        <form method="POST" action="" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mt-1 mb-3"> Πληροφορίες
+                    {%if current_user.details.role=='user' %} χρήστη  {%else%} διαχειριστή {%endif %}
+                </legend>
+                <!-- ----- Εικόνα profile ----- -->
+                <div class="container">
+                    <img src="{{ url_for('static',filename = 'profile_pics/'  + current_user.details.image_file) }}"
+                        class="img-thumbnail rounded-circle" style="max-width: 100px;">
+                </div>
+                <div class="row">
+                    <!-- ----- όνομα ----- -->
+                    <div class="form-group mt-3 col-6">
+                        {{ form.firstname.label(class="form-control-label") }}
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-user"></i></span>
+                            </div>
+                            {{ form.firstname(class="form-control", value=current_user.details.firstname) }}
+                           
+                        </div>
+                    </div>
+    
+                    <!-- ----- επώνυμο ----- -->
+                    <div class="form-group mt-3 col-6">
+                        {{ form.lastname.label(class="form-control-label") }}
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-user"></i></span>
+                            </div>
+                            {{ form.lastname(class="form-control", value=current_user.details.lastname) }}
+
+                        </div>
+                    </div>
+                </div>
+                
+
+                <div class="row">
+
+                    <!-- ----- φύλο ----- -->
+                    <div class="form-group mt-3 col-3">
+                        {{ form.gender.label(class="form-control-label") }}
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-transgender"></i></span>
+                            </div>
+                            <select class="form-select" id="gender_select" name="gender">
+                                <option value="Άνδρας">Άνδρας</option>
+                                <option value="Γυναίκα">Γυναίκα</option>
+                                <option value="Άλλο">Άλλο</option>
+                            </select>
+                        </div>
+                    </div>
+        
+                    <script>
+                        document.querySelector('select[name="gender"]').value = "{{current_user.details.gender}}"
+                    </script>
+                    <!-------- έτος γέννησης -------->
+        
+                    <div class="form-group mt-3 col-3">
+                        {{ form.year_of_birth.label(class="form-control-label") }}
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-birthday-cake"></i></span>
+                            </div>
+                            <select class="form-select" id="year_of_birth_select" name="year_of_birth">
+        
+                                {% for i in range(current_year - 80, current_year - 10) %}
+                                <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <script>
+                        document.querySelector('select[name="year_of_birth"]').value = "{{current_user.details.year_of_birth}}"
+                    </script>
+        
+                    <!-- ----- club ----- -->
+                    <div class="form-group mt-3 col-6">
+                        {{ form.club.label(class="form-control-label") }}
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-users"></i></span>
+                            </div>
+                            {%if current_user.details.club %}
+                            {{ form.club(value=current_user.details.club, class="form-control") }}
+                            {%else%}
+                            {{ form.club(value="Ανεξάρτητος/Ανεξάρτητη", class="form-control") }}
+                            {%endif%}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- περιφέρεια -->
+                    <div class="form-group mt-3 col-6">
+                        <label for="region_select" class="form-control-label">Περιφέρεια</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-globe"></i></span>
+                            </div>
+                            <select class="form-control form-control-sm" id="region_select" name="region">
+                                {% for region, cities_list in cities.items() %}
+                                <option value="{{ region }}">{{ region }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <script>
+                        document.querySelector('select[name="region"]').value = "{{current_user.details.region}}"
+                    </script>
+        
+                    <!-- δήμος -->
+                    <div class="form-group mt-3 col-6">
+                        <label for="city_select" class="form-control-label">Δήμος</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-globe"></i></span>
+                            </div>
+                            <select class="form-control form-control-sm" id="city_select" name="city">
+                                <!-- Εδώ θα προστεθούν δυναμικά οι επιλογές των δήμων -->
+                            </select>
+        
+                        </div>
+                    </div>
+                    <script>
+                        document.querySelector('select[name="city"]').value = "{{current_user.details.city}}"
+                    </script>
+                </div>
+
+                <!-- ----- picture ----- -->
+                <div class="form-group mt-3">
+                    {{ form.picture.label }}
+                    {{ form.picture(class="form-control-file") }}
+                    {% if form.picture.errors %}
+                    {% for error in form.picture.errors %}
+                    <span class="text-danger"> {{error}} </span> <br>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+    
+                <div class="form-group mt-4">
+                    {{ form.submit(class="btn btn-primary btn-block") }}
+                </div>
+            </fieldset>
+        </form>
+    
+    </div>
+
+<script>
+    // Συνάρτηση για την ενημέρωση του πεδίου της πόλης όταν γίνεται μια επιλογή στην περιφέρεια
+    document.getElementById('region_select').addEventListener('change', function() {
+        var region = this.value;
+        var cities_list = JSON.parse('{{ cities|tojson|safe }}');
+        var city_select = document.getElementById('city_select');
+        
+        // Διαγραφή προηγούμενων επιλογών πόλεων
+        city_select.innerHTML = '';
+        
+        // Προσθήκη νέων επιλογών πόλεων ανάλογα με την επιλεγμένη περιφέρεια
+        cities_list[region].forEach(function(city) {
+            var option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            city_select.appendChild(option);
+        });
+    });
+</script>
+
+<script>
+    // Επιλογή περιφέρειας κατά τη φόρτωση της σελίδας
+    window.addEventListener('load', function() {
+        var region = document.getElementById('region_select').value;
+        var cities_list = JSON.parse('{{ cities|tojson|safe }}');
+        var city_select = document.getElementById('city_select');
+        
+        // Λήψη της τρέχουσας πόλης του χρήστη από τη μεταβλητή current_user
+        var currentUserCity = '{{current_user.details.city}}';
+        
+        // Διαγραφή προηγούμενων επιλογών πόλεων
+        city_select.innerHTML = '';    
+            // Προσθήκη νέων επιλογών πόλεων ανάλογα με την επιλεγμένη περιφέρεια
+            cities_list[region].forEach(function(city) {
+                var option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                city_select.appendChild(option);
+            });
+            
+            // Ορισμός της τιμής του πεδίου επιλογής πόλης ως την τρέχουσα πόλη του χρήστη
+            city_select.value = currentUserCity;
+   
+    });
+</script>
+
+{% endblock %}

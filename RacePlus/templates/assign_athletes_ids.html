@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include "navbar.html" %}
+
+<div class="container mt-4">
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    <h5 class="mb-3"> {{event_racename}} - Ανάθεση id tag</h5>
+
+      <button type="button" class="btn btn-success" onclick="assignIds()">Αυτόματη ανάθεση</button>
+      <button type="button" class="btn btn-success mx-2" onclick="clearIds()">Αρχικοποίηση tags</button>
+      <form action="{{ url_for('crud_event', event_id=event_id) }}" method="post" style="display: inline;">
+        <input type="hidden" name="select_button" >
+        <button type="submit" class="btn btn-success mx-2">Επιστροφή στο γεγονός</button>
+    </form>
+    <p class="mb-4">Με την επιλογή "Αυτόματη ανάθεση", η αρίθμηση των ids θα ξεκινήσει από τον αριθμό που έχει γραφεί στο 1ο id tag.</p>
+    {% if event_fee>0 %}
+        <p>Στην παρακάτω λίστα συμπεριλαμβάνονται και οι συμμετέχοντες που δεν έχουν καταβάλει τα χρήματα της εγγραφής τους.</p>
+    {%endif%}
+    <form method="POST"  id="save-form">        
+        <input type="hidden" name="id_tags" id="id-tags"  value="" >
+
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col">A/A</th>
+            <th scope="col" class="clickable" data-column="fullname">Ονοματεπώνυμο</th>
+            <th scope="col" class="clickable" data-column="club">Σύλλογος</th>
+            <th scope="col" class="clickable" data-column="city">Πόλη</th>
+            <th scope="col" class="clickable" data-column="id"> ID Tag</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for participant in participants_details %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>
+              <span class="fw-light">{{ participant.firstname }}</span>
+              <span class="fw-light">{{ participant.lastname }}</span>
+            </td>
+            <td>{{ participant.club }}</td>
+            <td>{{ participant.city }}</td>
+            <td>
+                <input type="text" name="id_tag_{{ loop.index }}" id="id_tag_{{ loop.index }}" class="form-control" value="{{ participant.id_tag }}">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-primary" onclick="saveData()">Αποθήκευση</button>
+    </form>
+  </div>
+  
+  <script>
+    function assignIds() {
+      const idInputs = document.querySelectorAll('input[id^="id_tag_"]');
+      let startId = parseInt(idInputs[0].value, 10);
+      
+      if (isNaN(startId)) {
+        alert("Το πρώτο πεδίο της στήλης ID πρέπει να περιέχει έναν αριθμό. Η αρίθμηση θα ξεκινήσει από το 1");
+        startId = 1; // Ορίζουμε την αρίθμηση να ξεκινά από 1 αντί για την τιμή του startId
+      }
+    
+      const zeroPaddedStartId = String(startId).padStart(24, '0');
+    
+      idInputs.forEach((input, index) => {
+        input.value = zeroPaddedStartId.substring(0, 24 - String(startId + index).length) + (startId + index);
+      });
+    }
+    function clearIds() {
+      const idInputs = document.querySelectorAll('input[id^="id_tag_"]');
+      
+      idInputs.forEach((input) => {
+        input.value = '';
+      });
+    }
+function saveData() {
+        const idInputs = document.querySelectorAll('input[id^="id_tag_"]');
+        const idTagsValue = Array.from(idInputs).map(input => input.value).join(',');
+        document.getElementById('id-tags').value = idTagsValue;
+        document.getElementById('save-form').submit();
+  }
+  </script>
+  
+  
+{% endblock %}

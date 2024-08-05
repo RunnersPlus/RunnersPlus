@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block content %}
+{%include "navbar.html" %}
+
+    <div class="container mt-3">
+        {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning alert-dismissible fade show" role="{{category}}">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        <h4 class="text-center mb-4">Εισαγωγή αθλητικού γεγονότος</h4>
+        <form class="event-form" method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="row mt-3">
+                <div class="col-6">
+                    <div class="form-group">
+                        {{ form.racename.label(class="form-label") }}
+                        {{ form.racename(class="form-control") }}
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="form-group">
+                        {{ form.date.label(class="form-label") }}
+                        {{ form.date(class="form-control", id="date")}}
+                        
+                    </div>
+                </div>
+                 <div class="col-3">
+                    <div class="form-group">
+                        {{ form.time.label(class="form-label") }}
+                        {{ form.time(class="form-control",id="time") }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+             
+                <div class="form-group col-4">
+                    {{ form.distance.label(class="form-label") }}
+                    {{ form.distance(class="form-select") }}
+
+                </div>
+                
+                
+                <div class="form-group col-4">
+                    {{ form.categories.label(class="form-label") }}
+                        
+                    <select class="form-select" id="categories_select" name="categories">
+                        {% for category in event_categories %}
+                                  
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+           
+                <div class="form-group col-4">
+                    {{ form.finalize_date.label(class="form-label") }}
+                    {{ form.finalize_date(class="form-control", id="finalize_date") }}
+                </div>
+                    <!-- Συμπλήρωση του πεδίου "Ημερομηνία κλειδώματος εγγραφών"  -->
+                    <script>
+                       document.addEventListener('DOMContentLoaded', function() {
+                            var dataField = document.querySelector('#date');
+                            var finalizeDateField = document.querySelector('#finalize_date');
+
+                            dataField.addEventListener('change', function() {
+                                var selectedDate = new Date(dataField.value);
+                                var today = new Date();
+
+                                if (dataField.value.trim() !== '' && selectedDate >= today ) {
+                                    selectedDate.setDate(selectedDate.getDate());
+                                    finalizeDateField.value = selectedDate.toISOString().slice(0,10);
+                                }
+                            });
+                        });
+                        </script>
+            </div>
+            <div class="row mt-3">
+                <div class="form-group col-6 ">
+                    {{ form.link.label(class="form-label") }}
+                    {{ form.link() }}
+                </div>
+                
+                <div class="form-group col-6">
+                    {{ form.map.label(class="form-label") }}
+                    {{ form.map() }}
+                   
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="form-group col-6">
+
+                    {{ form.declaration.label (class="form-label")}}
+                    {{ form.declaration(class="form-control-file") }}
+                    {% if form.declaration.errors %}
+                        {% for error in form.declaration.errors %}
+                            <span class="text-danger"> {{error}} </span> <br>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <fieldset class="border p-3">
+                <legend class="form-label fs-5">Παροχές βασικού πακέτου</legend>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-check">
+                            {{ form.provides_bib(class="form-check-input", id="provides-bib", checked=True) }}
+                            {{ form.provides_bib.label(class="form-check-label", for="provides-bib") }} 
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-check">
+                            {{ form.provides_medal(class="form-check-input", id="provides-medal", checked=True) }}
+                            {{ form.provides_medal.label(class="form-check-label", for="provides-medal") }} 
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="form-check">
+                            {{ form.provides_certificate(class="form-check-input", id="provides-certificate") }}
+                            {{ form.provides_certificate.label(class="form-check-label", for="provides-certificate") }} 
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="form-check">
+                            {{ form.provides_tshirt(class="form-check-input", id="provides-tshirt") }}
+                            {{ form.provides_tshirt.label(class="form-check-label", for="provides-tshirt") }} 
+                        </div>
+                    </div>
+                
+                    <div class="form-group col-12">
+                        <label for="provides_other">Άλλο</label>
+                        <input type="text" class="form-control" id="provides_other" name="provides_other">
+                    </div>
+                    <div class="col-6 mt-3">
+                        <div class="form-group">
+                            {{ form.entry_fee.label(class="form-label") }}
+                            {{ form.entry_fee(class="form-control") }}
+                            {% if form.entry_fee.errors %}
+                                <ul class="errors">
+                                    {% for error in form.entry_fee.errors %}
+                                        {% if error != "Not a valid integer value" %}
+                                        <p class="text-danger">{{ error }}</p>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+    </div>
+
+   
+{% endblock %}

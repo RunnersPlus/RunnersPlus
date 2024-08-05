@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+{%include "navbar.html" %}
+
+<div class="contentA">
+
+    <div class="card text-center ">
+
+        <div class="card-body" style="background-color: #1b2653; color:white;">
+            {% for message in get_flashed_messages() %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            <br><br><br>
+            <h2 class="card-title">Καλώς ήρθατε στο RunnersPlus!</h2>
+            <br><br><br><br>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+{%include "navbar.html" %}
+
+<div class="container mt-3">
+    <div class="container">
+        <h5 class="mt-4">Αποτελέσματα συμμετοχής σε αθλητικά γεγονότα</h5>
+        <p class="text-muted small font-italic">Επιλέξτε την επικεφαλίδα κάθε στήλης για να ταξινομήσετε τις εγγραφές</p>
+       
+        <div class="table-responsive">
+            <form method="POST">
+                
+                <div class="d-flex justify-content-start mb-3">
+                    <button type="button" class="btn btn-primary me-3" onclick="printList('{{ racename }}')">Εξαγωγή σε PDF</button>
+                    <button type="button" class="btn btn-primary" onclick="exportTableToExcel()">Εξαγωγή σε XLS</button>
+                    
+                </div>
+            </form>
+            
+            <table class="table mt-2 table-responsive" id="tableToPrint">
+                <thead class="small">
+                    <tr>
+                        
+                        <th class="small sortable" onclick="sortTable(0)">Α/Α</th>
+                        <th class="small sortable" onclick="sortTable(1)">Αθλητικό γεγονός</th>
+                        <th class="small sortable" onclick="sortTable(2)">Έτος</th>
+                        <th class="small sortable" onclick="sortTable(3)">Απόσταση</th>
+                        <th class="small sortable" onclick="sortTable(4)">Πόλη</th>
+                        <th class="small sortable" onclick="sortTable(5)">Start time</th>
+                        <th class="small sortable" onclick="sortTable(6)">End time</th>
+                        <th class="small sortable" onclick="sortTable(7)">Net time</th>
+                        <th class="small sortable" onclick="sortTable(8)">Γενική</th>
+                        <th class="small sortable" onclick="sortTable(9)">Στο φύλο</th>
+                        <th class="small sortable" onclick="sortTable(10)">Ηλικιακή</th>
+            
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    {% for entry in all_results %}
+                        <tr class="bg-light text-dark small">
+                            <td class="text-muted small">{{ loop.index }}</td>
+                            <td class="text-muted small">{{ entry['racename'] }}</td>
+                            <td class="text-muted small">{{ entry['year'] }}</td>
+                            <td class="text-muted small">{{ entry['distance'] }}</td>
+                            <td class="text-muted small">{{ entry['city'] }}</td>
+                            <td class="text-muted small">{{ entry['start_time'] }}</td>
+                            <td class="text-muted small">{{ entry['end_time'] }}</td>
+                            <td class="text-muted small">{{ entry['net_time'] }}</td>
+                            <td class="text-muted small">{{position_net_time }}</td>
+                            <td class="text-muted small">{{position_gender_net_time }}</td>
+                            <td class="text-muted small">{{position_age_category_gender }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+
+function printList() {
+    var prtContent = document.getElementById("tableToPrint");
+    var rows = prtContent.getElementsByTagName("tr");
+    var WinPrint = window.open('', '', 'left=0,top=0,toolbar=0,scrollbars=0,status=0');
+    WinPrint.document.write('<html><head><title>{{racename}}</title>');
+    WinPrint.document.write('<style>');
+    WinPrint.document.write('table {width: 100%; border-collapse: collapse;}');
+    WinPrint.document.write('th, td {border: 1px solid black; padding: 8px; text-align: left;}');
+    WinPrint.document.write('th {background-color: #f2f2f2;}');
+    WinPrint.document.write('h4 {text-align: center;}');
+    WinPrint.document.write('</style>');
+    WinPrint.document.write('</head><body>');
+    WinPrint.document.write('<h4>Συμμετοχή σε αθλητικά γεγονότα</h4>');
+    WinPrint.document.write('<table>');
+    WinPrint.document.write('<thead>');
+    WinPrint.document.write('<tr>');
+    WinPrint.document.write('<th>Α/Α</th>');
+    WinPrint.document.write('<th>Αθλητικό γεγονός</th>');
+    WinPrint.document.write('<th>Χρονιά</th>');
+    WinPrint.document.write('<th>Απόσταση</th>');
+    WinPrint.document.write('<th>Πόλη</th>');
+    WinPrint.document.write('<th>Start time</th>');
+    WinPrint.document.write('<th>End time</th>');
+    WinPrint.document.write('<th>Net time</th>');
+    WinPrint.document.write('<th>Θέση γενική</th>');
+    WinPrint.document.write('<th>Θέση στο φύλο</th>');
+    WinPrint.document.write('<th>Θέση κατηγορίας</th>');
+    WinPrint.document.write('</tr>');
+    WinPrint.document.write('</thead>');
+    WinPrint.document.write('<tbody>');
+       
+    for (var i = 1; i < rows.length; i++) {
+        var cols = rows[i].getElementsByTagName("td");
+        WinPrint.document.write('<tr>');
+        for (var j = 0; j < cols.length; j++) {
+            WinPrint.document.write('<td>' + cols[j].innerHTML + '</td>');
+        }
+        WinPrint.document.write('</tr>');
+    }
+
+    WinPrint.document.write('</tbody>');
+    WinPrint.document.write('</table>');
+    WinPrint.document.write('</body></html>');
+    WinPrint.document.close();
+    WinPrint.focus();
+    WinPrint.print();
+    WinPrint.close();
+}
+
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("tableToPrint");
+        switching = true;
+        dir = "asc";
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                if (dir == "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+        var aaCells = table.querySelectorAll("tr td:first-child");
+        for (i = 0; i < aaCells.length; i++) {
+            aaCells[i].innerHTML = i + 1;
+        }
+    }
+
+
+function exportTableToExcel() {
+    var prtContent = document.getElementById("tableToPrint");
+    var rows = prtContent.getElementsByTagName("tr");
+    
+    var xls = '<html xmlns:x="urn:schemas-microsoft-com:office:excel">';
+    xls += '<head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>';
+    xls += '<x:Name>Sheet 1</x:Name>';
+    xls += '<x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>';
+    xls += '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head><body>';
+    xls += '<table border="1">';
+
+    for (var i = 0; i < rows.length; i++) {
+        xls += '<tr>';
+        var cols = rows[i].querySelectorAll("td, th");
+        for (var j = 0; j < cols.length; j++) {
+            xls += '<td>' + cols[j].innerHTML + '</td>';
+        }
+        xls += '</tr>';
+    }
+
+    xls += '</table></body></html>';
+
+    var blob = new Blob([xls], { type: 'application/vnd.ms-excel' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'tableToPrint.xls';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+
+<style>
+    th.sortable {
+        cursor: pointer;
+    }
+</style>
+
+
+
+
+
+{% endblock %}

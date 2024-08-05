@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include "navbar.html" %}
+<div class="container mt-4">
+  {% for message in get_flashed_messages() %}
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endfor %}
+
+  {%if not errors%}
+ 
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title mt-3">{{ racename }} - Δεδομένα χρονομέτρησης</h5>
+      <form action="{{ url_for('crud_event', event_id=event_id) }}" method="post" style="display: inline;">
+        <input type="hidden" name="select_button" >
+        <button type="submit" class="btn btn-success mx-2">Επιστροφή στο γεγονός</button>
+    </form>
+      <br><br>
+      <form class="small" method="post" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+      
+        <div class="row mb-3">
+          <p class="small">
+            Επιλέξτε ένα αρχείο με δεδομένα οριοθετημένα με κόμμα.
+            Η πρώτη στήλη να έχει το id και η δεύτερη τον χρόνο.
+          </p>
+          <div class="col-md-6 mt-3 mb-3">
+            {{ form.file.label }} {{ form.file(id="file-input", onchange="toggleSubmitButton()") }}
+            {% if form.file.errors %}
+              <div class="invalid-feedback d-block">
+                {{ form.file.errors[0] }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      
+        <div class="mb-3 mt-3">
+          <div class="row">
+            <div class="col-auto mb-3">
+              <button type="submit" class="btn btn-primary" id="submit-button" disabled name="submit" value="Εισαγωγή δεδομένων στην ΒΔ" title="Αρχείο με δεδομένα οριοθετημένα με κόμμα.">
+                Εισαγωγή δεδομένων στην ΒΔ
+              </button>
+
+            </div>
+          </div>
+      
+          {% if crono_ok %}
+          <br>
+          <p class="text-danger mt-6 mb-3 small">
+            Έχετε ήδη εισάγει δεδομένα χρονομέτρησης γι'αυτό το γεγονός.
+            Μπορείτε να τα κατεβάσετε, να εισάγετε νέα ή να δείτε τα δεδομένα.
+          </p>
+          <p> <b>Προηγούμενα δεδομένα χρονομέτρησης.</b></p>
+          <div class="row">
+            <div class="col-auto mb-3">
+              <button type="submit" class="btn btn-primary" name="submit" value="Εμφάνιση αποτελεσμάτων" title="Εμφάνιση προηγούμενων δεδομένων χρονομέτρησης">
+                Εμφάνιση 
+              </button>
+            </div>
+      
+            <div class="col-auto">
+              <a href="{{ url_for('static', filename=f) }}" download="{{racename}}_timing_data.csv" class="btn btn-primary" title="Κατεβάστε το αρχείο με τα προηγούμενα δεδομένα χρονομέτρησης.">
+                Κατέβασε τα
+              </a>
+            </div>
+            
+          </div>
+          {% endif %}
+        </div>
+      </form>
+      
+    </div>
+  </div>
+</div>
+{%else%}
+
+<div class="card mt-4">
+  <div class="card-body">
+    <h5 class="card-title mt-2 mb-3">Το αρχείο περιέχει εγγραφές με λάθη</h5> 
+    <form method="post">
+      {{ form.hidden_tag() }}
+      <input type="hidden" name="old_errors" value="{{ errors }}">
+      <input type="hidden" name="old_all" value="{{ all }}">
+      <input type="hidden" name="corrects" value="{{ corrects }}">
+      <button type="submit" class="btn btn-primary btn-sm" name="submit" value="Αποστολή νέου αρχείου">Αποστολή νέου αρχείου</button>
+      &nbsp;&nbsp;
+      <button type="submit" class="btn btn-primary btn-sm" name="submit" value="Αποθήκευση αλλαγών">Αποθήκευση αλλαγών</button>
+      &nbsp;&nbsp;
+      <button type="submit" class="btn btn-success btn-sm" name="submit" value="Αποδοχή εγγραφών">Αποδοχή μόνο των σωστών εγγραφών</button>
+      <p class="small mt-4"> 
+        Αν επιλέξετε 'Αποδοχή μόνο των σωστών εγγραφών' δεν θα αποθηκευτούν τα αποτελέσματα που έχουν λάθη.
+        Αν επιλέξετε 'Αποθήκευση αλλαγών' θα εφαρμοστούν οι τροποποιήσεις που κάνατε στις παρακάτω εγγραφές.
+      </p>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <thead>
+            <tr>Λάθη που εντοπίστηκαν</tr>
+            <tr>
+              <th class="col-2">ID</th>
+              <th class="col-2">Εκκίνηση </th>
+              <th class="col-2">Τερματισμός </th>
+              <th class="col-6">Λάθος</th>
+            </tr>
+          </thead>
+          <tbody>
+            {%if errors %}
+              {% for error in errors %}
+              <tr>
+                <td><input type="text" name="id[]" value="{{ error[0] }}" size=25 readonly> </td>
+                <td><input type="text" name="t1[]" value="{{ error[1] }}" size=12></td>
+                <td><input type="text" name="t2[]" value="{{ error[2] }}" size=12></td>
+                <td><input type="text" name="error_type[]" value="{{ error[3] }}" size=40 readonly > </td>
+                <td><button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(this)">Διαγραφή</button></td>
+              </tr>
+              {% endfor %}
+            {%endif%}
+            
+          </tbody>
+        </table>
+      </div>
+<!-- -------------------------------------------------- -->
+    <div class="table-responsive col-md-6">
+      <div class=""></div>
+      <table  class="table table-bordered table-striped">
+        <thead>
+          <tr>Σωστές εγγραφές</tr>
+          <tr>
+            <th class="col-2">ID</th>
+            <th class="col-2">Εκκίνηση </th>
+            <th class="col-2">Τερματισμός </th>
+    
+          </tr>
+        </thead>
+        <tbody>
+            {% for record in all %}
+            {%if record[0]!='ALL_PASS_FROM_START_POINT' and (record[3]==None or record[3]=='') %}
+              <tr>
+                <td><input type="text" value="{{ record[0] }}" size=25 readonly> </td>
+                <td><input type="text" value="{{ record[1] }}" size=12 readonly></td>
+                <td><input type="text" value="{{ record[2] }}" size=12 readonly></td>    
+      
+              </tr>
+              {%endif%}
+            {% endfor %}
+   
+            </tbody>
+          </table>
+        </div>
+    </form>
+  </div>
+</div>
+
+{%endif%}
+<script>
+function deleteRow(btn) {
+  var row = btn.parentNode.parentNode;
+  row.parentNode.removeChild(row);
+}
+
+
+    function toggleSubmitButton() {
+      const fileInput = document.getElementById('file-input');
+      const submitButton = document.getElementById('submit-button');
+      submitButton.disabled = !fileInput.value;
+    }
+  
+</script>
+{% endblock %}

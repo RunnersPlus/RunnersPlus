@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block content %}
+{%include "navbar.html" %}
+<div class="container mt-4 ">
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning alert-dismissible fade show" role="{{category}}">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+    {%if events %}
+        <h5>Εμφάνιση αθλητικών γεγονότων</h5>
+        <br>
+
+
+        <form method="POST" id="eventForm">
+            {{ form.hidden_tag() }}
+
+            <div class=" row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="start_date">{{ form.start_date.label.text }}</label>
+                        {{ form.start_date(class="form-control", id="start_date", value=first_event_date) }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="end_date">{{ form.end_date.label.text }}</label>
+                        {{ form.end_date(class="form-control", id="end_date", value=last_event_date) }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="options">Επιλογή:</label>
+                        <select class="form-control" id="sort_events" name="options">
+                            <option value="_events" {% if order==-1 %} selected {% endif %}>Χωρίς επιλογή</option>
+                            <option value="next_events" {% if order==1 %} selected {% endif %}>Αγώνες που θα γίνουν</option>
+                            <option value="previous_events" {% if order==2 %} selected {% endif %}>Αγώνες που έγιναν</option>
+                            <option value="all_events" {% if order==0 %} selected {% endif %}>Όλοι οι αγώνες</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+            {%if current_user.is_authenticated %}
+
+                <div class="row">
+                    <div class="col-md-6 ">
+                        <div class="form-check">
+
+                            {%if current_user.details.role=='user'%}
+                            {{ form.my_races(class="form-check-input", id="my_races") }}
+                            <label class="form-check-label" for="my_races">{{ form.my_races.label.text }}</label>
+                            {%elif current_user.details.role=='admin'%}
+                            {{ form.my_races(class="form-check-input", id="my_races") }}
+                            <label class="form-check-label" for="my_races">Εμφάνισε μόνο τα γεγονότα που έχω δημιουργήσει</label>
+                            {%endif%}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="d-flex justify-content-center align-items-center">
+                <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+            </div>
+        </form>
+
+        <div class="row my-4">
+            {% for event in events %}
+            <div class="col-sm-4 mb-4">
+                {%if event in current_user.enroll and current_user.details.role!='super_admin'%}
+                    <div class="card text-white bg-primary" id="card_{{ event.id }}">
+                {%else%}
+                    <div class="card text-white bg-info" id="card_{{ event.id }}">
+                {%endif%}
+                <div class="card-header">{{ event.racename }} </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ event.distance }},
+                            {{ event.date.strftime('%d/%m/%Y') }} -
+                            {%if event.entry_fee >0 %}
+                                {{event.entry_fee}}€
+                            {%else%}
+                                δωρεάν
+                            {%endif%}
+                        </p>
+
+                        <form method="POST" action="{{ url_for('crud_event', event_id=event.id) }}" class="hidden-form">
+                            <input type="hidden" name="event_id" value="{{ event.id }}">
+                            <button type="submit" name="select_button" value="Επιλογή"
+                                class="btn btn-danger">Επιλογή</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+       
+    {% endif %}
+</div>
+
+<script>
+    document.getElementById('eventForm').addEventListener('submit', function(event) {
+        var startDate = new Date(document.getElementById('start_date').value);
+        var endDate = new Date(document.getElementById('end_date').value);
+
+        if (startDate > endDate) {
+            event.preventDefault();
+            alert('Η ημερομηνία έναρξης πρέπει να είναι μικρότερη ή ίση από την ημερομηνία λήξης.');
+        }
+    });
+</script>
+
+{% endblock %}

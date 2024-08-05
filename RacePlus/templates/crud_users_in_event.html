@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+{%include "navbar.html" %}
+<style>
+    th.sortable {
+        cursor: pointer;
+    }
+</style>
+<div class="container mt-3">
+    <div class="container">
+        <h5 class="mt-3 ">{{event.racename}} - Διαχείριση εγγραμμένων χρηστών</h5>
+        <br>
+        
+        <p class="text-muted small font-italic">Επιλέξτε την επικεφαλίδα κάθε στήλης για να ταξινομήσετε τις εγγραφές</p>
+        
+        <div class="table-responsive">
+            <div class="d-flex justify-content-start mb-3">
+            <form method="POST" action="{{ url_for('crud_event', event_id=event.id) }}" id="saveForm" onsubmit="return saveData()">
+                <input type="hidden" name="user_data" id="user_data">
+                
+                    {% if event.entry_fee > 0 %}
+                        <button type="submit" name="select_button" value="Αποθήκευση" class="btn btn-primary me-2">Αποθήκευση</button>
+                    {% endif %}
+                    <button type="button" class="btn btn-primary" onclick="printList({{ event.entry_fee }})">Εκτύπωση λίστας</button>
+                
+                
+            </form>
+            <form action="{{ url_for('crud_event', event_id=event.id) }}" method="post" style="display: inline;">
+                <input type="hidden" name="select_button" >
+                <button type="submit" class="btn btn-success mx-2">Επιστροφή στο γεγονός</button>
+            </form>
+        </div>
+            <table class="table mt-2" id="tableToPrint">
+                <thead>
+                    <tr>
+                        <th class="small sortable" onclick="sortTable(0)">Α/Α</th>
+                        <th class="small sortable" onclick="sortTable(1)">Ονοματεπώνυμο</th>
+                        <th class="small sortable" onclick="sortTable(2)">Email</th>
+                        <th class="small sortable" onclick="sortTable(3)">Φύλο</th>
+                        <th class="small sortable" onclick="sortTable(4)">Έτος γέννησης</th>
+                        <th class="small sortable" onclick="sortTable(5)">Σύλλογος</th>
+                        <th class="small sortable" onclick="sortTable(6)">Πόλη</th>
+                        {% if event.entry_fee > 0 %}
+                            <th class="small sortable" onclick="sortTable(7)">Πληρωμή</th>
+                        {% endif %}
+                        <th class="small sortable" onclick="sortTable(8)">Αίτημα διαγραφής</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in user_details_dict %}
+                    {% set fullname = user['Επώνυμο'] + ' ' + user['Όνομα'] %}
+                    
+                    <tr class="{% if user['Αίτημα διαγραφής'] %}bg-danger text-light{% else %} bg-light text-dark{% endif %} ">
+                        <td class="small {% if user['Αίτημα διαγραφής'] %}bg-danger text-light{% else %}bg-light{% endif %} ">{{ loop.index }}</td>
+                        <td class="small {% if user['Αίτημα διαγραφής'] %}bg-danger text-light{% else %}bg-light{% endif %} ">
+                            <form method="POST" action="{{ url_for('crud_event', event_id=event.id) }}" class="hidden-form "
+                                onsubmit="return confirmDelete('{{ fullname }}')">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <button type="submit" name="select_button" value="Διαγραφή χρήστη από event"
+                                    style="background:none;border:none;padding:0;">
+                                    {% if user['Αίτημα διαγραφής'] %}
+                                        <img src="{{ url_for('static', filename='images/delete_white.png') }}" alt="Διαγραφή"
+                                         style="width:15px;height:15px; " title="Ο/H {{fullname}} έχει κάνει αίτημα διαγραφής από το {{event.racename}}"> 
+                                    {%else%}
+                                        <img src="{{ url_for('static', filename='images/delete.png') }}" alt="Διαγραφή"
+                                        style="width:15px;height:15px;"> 
+                                    {%endif%}
+                                    
+                                        {%if user['Αίτημα διαγραφής'] %}
+                                            <span class="text-light" title="Ο/H {{fullname}} έχει κάνει αίτημα διαγραφής από το {{event.racename}}">{{ fullname }}</span>
+                                        {%else%}
+                                            <span >{{ fullname }}</span>
+                                        {%endif%}
+                                </button>
+                            </form>
+                            <script>
+                                function confirmDelete(fullname) {
+                                    return confirm("Επιβεβαιώστε ότι θέλετε να διαγράψετε από το γεγονός τον χρήστη " + fullname);
+                                }
+                            </script>
+                        </td>
+                        <td class="small {% if user['Αίτημα διαγραφής'] %}bg-danger text-light {% else %}bg-light{% endif %} ">{{ user['Email'] }}</td>
+                        <td class="small {% if user['Αίτημα διαγραφής'] %}bg-danger text-light {% else %}bg-light{% endif %} ">{{ user['Φύλο'] }}</td>
+                        <td class="small {% if user['Αίτημα διαγραφής'] %}bg-danger text-light {% else %}bg-light{% endif %} ">{{ user['Έτος γέννησης'] }}</td>
+                        <td class="small {% if user['Αίτημα διαγραφής'] %}bg-danger text-light {% else %}bg-light{% endif %} ">{{ user['Σύλλογος'] }}</td>
+                        <td class="small {% if user['Αίτημα διαγραφής'] %}bg-danger text-light {% else %}bg-light{% endif %} ">{{ user['Πόλη'] }}</td>
+                        {% if event.entry_fee > 0 %}
+                            <td class="small {% if user['Αίτημα διαγραφής'] %}bg-danger{% else %}bg-light{% endif %} ">
+                                <select name="payment_status" id="payment_status_{{ user.id }}">
+                                    <option value="Όχι" {% if not user['Πληρωμή'] %} selected {% endif %}>Όχι</option>
+                                    <option value="Ναι" {% if user['Πληρωμή'] %} selected {% endif %}>Ναι</option>
+                                </select>
+                            </td>
+                        {% endif %}
+                        <td class="small {% if user['Αίτημα διαγραφής'] %}bg-danger{% else %}bg-light{% endif %} ">
+                            {% if user['Αίτημα διαγραφής'] %}
+                            <span class="text-light"> Ναι </span>
+                            {% else %}
+                                Όχι
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function saveData() {
+        const userRows = document.querySelectorAll('#tableToPrint tbody tr');
+        const userData = [];
+
+        userRows.forEach(row => {
+            const userId = row.querySelector('form input[name="user_id"]').value;
+            const paymentStatusElement = row.querySelector('select[name="payment_status"]');
+            const paymentStatus = paymentStatusElement ? paymentStatusElement.value : null;
+
+            userData.push({ user_id: userId, payment_status: paymentStatus });
+        });
+
+        document.getElementById('user_data').value = JSON.stringify(userData);
+        document.getElementById('saveForm').submit();
+    }
+
+    function printList(fee) {
+        var prtContent = document.getElementById("tableToPrint");
+        var rows = prtContent.getElementsByTagName("tr");
+        var WinPrint = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0');
+        WinPrint.document.write('<html><head><title>{{event.racename}}</title>');
+        WinPrint.document.write('<style>');
+        WinPrint.document.write('table {width: 100%; border-collapse: collapse;}');
+        WinPrint.document.write('th, td {border: 1px solid black; padding: 8px; text-align: left;}');
+        WinPrint.document.write('th {background-color: #f2f2f2;}');
+        WinPrint.document.write('h4 {text-align: center;}');
+        WinPrint.document.write('</style>');
+        WinPrint.document.write('</head><body>');
+        WinPrint.document.write('<h4>Συμμετέχοντες στο {{event.racename}}</h4>');
+        WinPrint.document.write('<table>');
+        WinPrint.document.write('<thead>');
+        WinPrint.document.write('<tr>');
+        WinPrint.document.write('<th>Α/Α</th>');
+        WinPrint.document.write('<th>Ονοματεπώνυμο</th>');
+        WinPrint.document.write('<th>Email</th>');
+        WinPrint.document.write('<th>Φύλο</th>');
+        WinPrint.document.write('<th>Έτος γέννησης</th>');
+        WinPrint.document.write('<th>Σύλλογος</th>');
+        WinPrint.document.write('<th>Πόλη</th>');
+        if (fee > 0) {
+            WinPrint.document.write('<th>Πληρωμή</th>');
+        }
+        WinPrint.document.write('</tr>');
+        WinPrint.document.write('</thead>');
+        WinPrint.document.write('<tbody>');
+
+        for (var i = 1; i < rows.length; i++) {
+            var cols = rows[i].getElementsByTagName("td");
+            WinPrint.document.write('<tr>');
+            for (var j = 0; j < cols.length - 1; j++) { // Παραλείπουμε την τελευταία στήλη
+                if (fee > 0 && j == 7) {
+                    var paymentStatus = cols[j].querySelector("select");
+                    if (paymentStatus) {
+                        var selectedValue = paymentStatus.options[paymentStatus.selectedIndex].text;
+                        WinPrint.document.write('<td>' + selectedValue + '</td>');
+                    }
+                } else if (!cols[j].querySelector('img')) { // αν δεν είναι το εικονίδιο της διαγραφής
+                    WinPrint.document.write('<td>' + cols[j].innerHTML + '</td>');
+                } else if (j == 1) {
+                    var fullname = rows[i].querySelector("form button").innerText.trim();
+                    WinPrint.document.write('<td>' + fullname + '</td>');
+                }
+            }
+            WinPrint.document.write('</tr>');
+        }
+
+        WinPrint.document.write('</tbody>');
+        WinPrint.document.write('</table>');
+        WinPrint.document.write('</body></html>');
+        WinPrint.document.close();
+        WinPrint.focus();
+        WinPrint.print();
+        WinPrint.close();
+    }
+
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("tableToPrint");
+        switching = true;
+        dir = "asc";
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                if (dir == "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+        var aaCells = table.querySelectorAll("tr td:first-child");
+        for (i = 0; i < aaCells.length; i++) {
+            aaCells[i].innerHTML = i + 1;
+        }
+    }
+</script>
+
+
+
+
+
+
+
+{% endblock %}
